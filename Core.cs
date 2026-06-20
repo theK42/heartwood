@@ -82,6 +82,8 @@ namespace Heartwood
                 // TODO: kick off the error-handler flow — halt as much running behavior
                 // as possible, show a popup, on OK tear down and restart from Bootstrap.
                 // Crashlytics' auto-handler is already reporting these as fatal.
+
+                ScreenManager.Instance.PushModal(new GenericModal("Error", "An unhandled exception occurred."));
             }
             catch (Exception e)
             {

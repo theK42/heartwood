@@ -2,7 +2,12 @@
     "name": "Heartwood",
     "rootNamespace": "Heartwood",
     "references": [
-        "PlayFab"
+        "PlayFab",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
+        "AYellowpaper.SerializedCollections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

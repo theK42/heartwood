@@ -9,6 +9,11 @@ namespace Heartwood
 
         public virtual void Tick() { }
 
+        // Game project returns a concrete LoadingSpinner whose AddressableKey points at
+        // the game's spinner prefab. Return null to opt out (ScreenManager just won't
+        // show a spinner during loads).
+        public virtual LoadingSpinner CreateLoadingSpinner() => null;
+
         public void Start() => Core.FireAndForget(StartAsync(Core.Instance.Token));
     }
 }
