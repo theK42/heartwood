@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.CloudScriptModels;
+using PlayFab.Json;
 using UnityEngine;
 
 namespace Heartwood
@@ -67,16 +69,38 @@ namespace Heartwood
             return tcs.Task;
         }
 
+        // Calls a PlayFab-registered Azure Function via ExecuteFunction, deserializing the
+        // FunctionResult into T. Transport errors come back as PlayFabException (via ToTask);
+        // function-runtime errors come back on the success path with result.Error populated
+        // and are surfaced as AzureFunctionException.
+        protected static async Task<T> ExecuteFunctionAsync<T>(string name, object args, CancellationToken ct)
+        {
+            var request = new ExecuteFunctionRequest
+            {
+                FunctionName = name,
+                FunctionParameter = args,
+                GeneratePlayStreamEvent = true,
+            };
+            var result = await ToTask<ExecuteFunctionResult>(
+                (onSuccess, onError) => PlayFabCloudScriptAPI.ExecuteFunction(request, onSuccess, onError),
+                ct);
+            if (result.Error != null)
+                throw new AzureFunctionException(result.Error);
+
+            var json = PlayFabSimpleJson.SerializeObject(result.FunctionResult);
+            return PlayFabSimpleJson.DeserializeObject<T>(json);
+        }
+
         public class PlayFabException : Exception
         {
             public PlayFabError Error { get; }
             public PlayFabException(PlayFabError error) : base(error.GenerateErrorReport()) => Error = error;
         }
 
-        public class CloudScriptException : Exception
+        public class AzureFunctionException : Exception
         {
-            public ScriptExecutionError Error { get; }
-            public CloudScriptException(ScriptExecutionError error)
+            public FunctionExecutionError Error { get; }
+            public AzureFunctionException(FunctionExecutionError error)
                 : base($"{error.Error} - {error.Message}\n{error.StackTrace}") => Error = error;
         }
     }
