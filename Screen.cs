@@ -36,32 +36,26 @@ namespace Heartwood
             // Addressables.InstantiateAsync doesn't accept a CancellationToken — if we
             // get cancelled mid-load, we let the load finish, then release the instance.
             _handle = Addressables.InstantiateAsync(Address, parent);
-            await _handle.Task;
-
+            await using CancellationTokenRegistration ctr = token.Register(Dispose);
+            await _handle.Task;            
+            token.ThrowIfCancellationRequested();
+            
             if (_handle.Status != AsyncOperationStatus.Succeeded)
             {
-                DisposeCts();
+                Dispose();
                 throw _handle.OperationException ?? new Exception($"Failed to load {Address}");
             }
 
             Root = _handle.Result;
             Root.SetActive(false);
-
-            if (token.IsCancellationRequested)
-            {
-                ReleaseHandle();
-                DisposeCts();
-                token.ThrowIfCancellationRequested();
-            }
-
+            
             try
             {
                 await SetupAsync(token);
             }
             catch
             {
-                ReleaseHandle();
-                DisposeCts();
+                Dispose();
                 throw;
             }
 
@@ -116,8 +110,8 @@ namespace Heartwood
         // (reverting it to a loaded state).
         public virtual void Dispose()
         {
+            DisposeCts(); //ReleaseHandle is
             ReleaseHandle();
-            DisposeCts();
         }
 
         private void ReleaseHandle()
