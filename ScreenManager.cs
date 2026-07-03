@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,12 +35,11 @@ namespace Heartwood
         // Load + setup a Screen without putting it on the stack. Caller holds the Screen
         // and later calls PushScreen/PushModal — that push sees IsPrepared and skips the
         // spinner-blocked load step.
-        public Task PrepareAsync(Screen s, CancellationToken ct)
-            => s.PrepareAsync(RootCanvas.transform, ct);
+        public Task PrepareAsync(Screen s) => s.PrepareAsync(RootCanvas.transform);
 
-        public void Prepare(Screen s) => Core.FireAndForget(PrepareAsync(s, Core.Instance.Token));
+        public void Prepare(Screen s) => Core.FireAndForget(PrepareAsync(s));
 
-        public async Task PushScreenAsync(Screen s, CancellationToken ct)
+        public async Task PushScreenAsync(Screen s)
         {
             // Snapshot what's currently loaded — these get unloaded after the intro plays.
             // Since the new top is a Screen, the new visible set is just s; everything
@@ -50,7 +48,7 @@ namespace Heartwood
             foreach (var existing in _stack)
                 if (existing.IsPrepared) toUnload.Add(existing);
 
-            await PrepareWithSpinnerAsync(s, ct);
+            await PrepareWithSpinnerAsync(s);
 
             s.Root.transform.SetAsLastSibling();
             s.Show();
@@ -58,50 +56,50 @@ namespace Heartwood
 
             // Intro plays while previously-visible screens are still up. After the intro
             // completes, the screens underneath are released.
-            await s.IntroAsync(ct);
+            await s.IntroAsync();
 
             foreach (var p in toUnload) p.Dispose();
         }
 
-        public void PushScreen(Screen s) => Core.FireAndForget(PushScreenAsync(s, Core.Instance.Token));
+        public void PushScreen(Screen s) => Core.FireAndForget(PushScreenAsync(s));
 
-        public async Task PushModalAsync(Modal m, CancellationToken ct)
+        public async Task PushModalAsync(Modal m)
         {
-            await PrepareWithSpinnerAsync(m, ct);
+            await PrepareWithSpinnerAsync(m);
 
             m.Root.transform.SetAsLastSibling();
             m.Show();
             _stack.Add(m);
 
-            await m.IntroAsync(ct);
+            await m.IntroAsync();
 
             // Modals don't hide anything — visible set just gains m. No unloads.
         }
 
-        public void PushModal(Modal m) => Core.FireAndForget(PushModalAsync(m, Core.Instance.Token));
+        public void PushModal(Modal m) => Core.FireAndForget(PushModalAsync(m));
 
-        public async Task PopAsync(CancellationToken ct)
+        public async Task PopAsync()
         {
             if (_stack.Count == 0) return;
 
             var top = _stack[_stack.Count - 1];
             var revealSet = ComputeRevealSet(_stack.Count - 2);
 
-            await PrepareRevealSetWithSpinnerAsync(revealSet, ct);
+            await PrepareRevealSetWithSpinnerAsync(revealSet);
             PositionForReveal(top, revealSet);
 
-            await top.OutroAsync(ct);
+            await top.OutroAsync();
 
             top.Dispose();
             _stack.RemoveAt(_stack.Count - 1);
         }
 
-        public void Pop() => Core.FireAndForget(PopAsync(Core.Instance.Token));
+        public void Pop() => Core.FireAndForget(PopAsync());
 
         // Pops the stack down until `target` is the top. Only the current top plays its
         // outro; intermediate items between target and top are removed silently (and
         // unloaded if somehow still loaded — they shouldn't be, by the visibility rule).
-        public async Task PopToAsync(Screen target, CancellationToken ct)
+        public async Task PopToAsync(Screen target)
         {
             var targetIdx = _stack.IndexOf(target);
             if (targetIdx < 0)
@@ -123,10 +121,10 @@ namespace Heartwood
 
             var revealSet = ComputeRevealSet(targetIdx);
 
-            await PrepareRevealSetWithSpinnerAsync(revealSet, ct);
+            await PrepareRevealSetWithSpinnerAsync(revealSet);
             PositionForReveal(top, revealSet);
 
-            await top.OutroAsync(ct);
+            await top.OutroAsync();
 
             top.Dispose();
             _stack.RemoveAt(_stack.Count - 1);
@@ -140,7 +138,7 @@ namespace Heartwood
             }
         }
 
-        public void PopTo(Screen target) => Core.FireAndForget(PopToAsync(target, Core.Instance.Token));
+        public void PopTo(Screen target) => Core.FireAndForget(PopToAsync(target));
 
         // Inserts `toInsert` just below `anchor` in the stack. No animation, no load —
         // toInsert starts unloaded. Throws if the insert would change the visibility set
@@ -170,7 +168,7 @@ namespace Heartwood
         // assets are released. Intended for screens that are already hidden (unloaded)
         // by the visibility rule — removing the current visible top is undefined here;
         // use Pop for that.
-        public Task RemoveAsync(Screen target, CancellationToken ct)
+        public void Remove(Screen target)
         {
             var idx = _stack.IndexOf(target);
             if (idx < 0)
@@ -179,14 +177,11 @@ namespace Heartwood
 
             if (target.IsPrepared) target.Dispose();
             _stack.RemoveAt(idx);
-            return Task.CompletedTask;
         }
-
-        public void Remove(Screen target) => Core.FireAndForget(RemoveAsync(target, Core.Instance.Token));
 
         // Removes the inclusive range [bottom .. top] from the stack. Same constraints
         // as Remove: intended for screens that are already hidden; doesn't animate.
-        public Task RemoveBetweenAsync(Screen top, Screen bottom, CancellationToken ct)
+        public void RemoveBetween(Screen top, Screen bottom)
         {
             var topIdx = _stack.IndexOf(top);
             var bottomIdx = _stack.IndexOf(bottom);
@@ -206,12 +201,7 @@ namespace Heartwood
                 if (_stack[i].IsPrepared) _stack[i].Dispose();
                 _stack.RemoveAt(i);
             }
-
-            return Task.CompletedTask;
         }
-
-        public void RemoveBetween(Screen top, Screen bottom)
-            => Core.FireAndForget(RemoveBetweenAsync(top, bottom, Core.Instance.Token));
 
         // Computes which screens should be visible (loaded) when the screen at `newTopIdx`
         // is the new top of the stack. Range = (next-topmost-Screen-at-or-below-newTopIdx)
@@ -251,18 +241,18 @@ namespace Heartwood
 
         // Prepares everything in revealSet that isn't already prepared, showing the
         // spinner if any load is needed.
-        private async Task PrepareRevealSetWithSpinnerAsync(List<Screen> revealSet, CancellationToken ct)
+        private async Task PrepareRevealSetWithSpinnerAsync(List<Screen> revealSet)
         {
             var anyNeedsLoad = false;
             foreach (var r in revealSet)
                 if (!r.IsPrepared) { anyNeedsLoad = true; break; }
 
-            if (anyNeedsLoad) await ShowSpinnerAsync(ct);
+            if (anyNeedsLoad) await ShowSpinnerAsync();
             try
             {
                 foreach (var r in revealSet)
                     if (!r.IsPrepared)
-                        await r.PrepareAsync(RootCanvas.transform, ct);
+                        await r.PrepareAsync(RootCanvas.transform);
             }
             finally
             {
@@ -280,13 +270,13 @@ namespace Heartwood
             foreach (var r in revealSet) r.Show();
         }
 
-        private async Task PrepareWithSpinnerAsync(Screen s, CancellationToken ct)
+        private async Task PrepareWithSpinnerAsync(Screen s)
         {
             var needsLoad = !s.IsPrepared;
-            if (needsLoad) await ShowSpinnerAsync(ct);
+            if (needsLoad) await ShowSpinnerAsync();
             try
             {
-                await s.PrepareAsync(RootCanvas.transform, ct);
+                await s.PrepareAsync(RootCanvas.transform);
             }
             finally
             {
@@ -294,7 +284,7 @@ namespace Heartwood
             }
         }
 
-        private async Task ShowSpinnerAsync(CancellationToken ct)
+        private async Task ShowSpinnerAsync()
         {
             if (_spinner == null)
                 _spinner = Core.Instance.Game.CreateLoadingSpinner();
@@ -303,7 +293,7 @@ namespace Heartwood
             if (_spinner == null) return;
 
             if (!_spinner.IsPrepared)
-                await _spinner.PrepareAsync(RootCanvas.transform, ct);
+                await _spinner.PrepareAsync(RootCanvas.transform);
 
             _spinner.Root.transform.SetAsLastSibling();
             _spinner.Show();

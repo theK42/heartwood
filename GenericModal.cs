@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace Heartwood
 {
@@ -8,7 +7,7 @@ namespace Heartwood
     {
         private readonly string _title;
         private readonly string _message;
-        
+
         public GenericModal(string title, string message)
         {
             _title = title;
