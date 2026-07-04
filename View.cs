@@ -15,41 +15,15 @@ namespace Heartwood
     {
         [SerializeField] private SerializedDictionary<string, GameObject> references;
 
-        // Populated in Awake — one entry per reference whose GameObject has an Image
-        // component. Slots own the per-Image load state (CTS, handle, task, address,
-        // original color) so image loads survive multi-frame gaps, can be reassigned
-        // or cancelled independently, and are all released together in OnDestroy.
-        private Dictionary<string, ImageSlot> _imageSlots;
-
-        private void Awake()
-        {
-            _imageSlots = new Dictionary<string, ImageSlot>();
-            if (references == null) return;
-
-            foreach (var kv in references)
-            {
-                if (kv.Value == null) continue;
-                var image = kv.Value.GetComponent<Image>();
-                if (image == null) continue;
-
-                var slot = new ImageSlot
-                {
-                    Image = image,
-                    OriginalColor = image.color,
-                };
-
-                // Hide the editor-preview sprite until a real load lands.
-                var c = image.color;
-                c.a = 0f;
-                image.color = c;
-
-                _imageSlots[kv.Key] = slot;
-            }
-        }
+        // Created lazily on the first SetImageAsync for each reference — so references
+        // whose Image is decorative (buttons, static sprites) stay at their prefab color
+        // and never get touched. One slot owns the per-Image load state (CTS, handle,
+        // task, address, original color) so loads survive multi-frame gaps, can be
+        // reassigned or cancelled independently, and are all released in OnDestroy.
+        private readonly Dictionary<string, ImageSlot> _imageSlots = new();
 
         private void OnDestroy()
         {
-            if (_imageSlots == null) return;
             foreach (var slot in _imageSlots.Values)
             {
                 slot.CancelAndDisposeCts();
@@ -120,9 +94,7 @@ namespace Heartwood
             if (string.IsNullOrEmpty(address))
                 throw new ArgumentException("Address must be a non-empty string.", nameof(address));
 
-            if (_imageSlots == null || !_imageSlots.TryGetValue(referenceName, out var slot))
-                throw new KeyNotFoundException(
-                    $"View on '{name}' has no image reference '{referenceName}'.");
+            var slot = GetOrCreateImageSlot(referenceName);
 
             // Same-address rebind: warn and return the existing task. Faulted/cancelled
             // prior loads fall through to a fresh (retry) load.
@@ -148,8 +120,6 @@ namespace Heartwood
         // list on entry, so loads started after this call don't extend the wait.
         public Task WhenAllLoadsAsync()
         {
-            if (_imageSlots == null) return Task.CompletedTask;
-
             List<Task> tasks = null;
             foreach (var slot in _imageSlots.Values)
             {
@@ -160,6 +130,38 @@ namespace Heartwood
                 }
             }
             return tasks == null ? Task.CompletedTask : Task.WhenAll(tasks);
+        }
+
+        // Look up or create the slot for `referenceName`. Slot creation captures the
+        // Image's original color (so it can be restored on load) and immediately hides
+        // it via alpha=0 — any prefab-authored placeholder disappears the moment we
+        // commit to loading over it.
+        private ImageSlot GetOrCreateImageSlot(string referenceName)
+        {
+            if (_imageSlots.TryGetValue(referenceName, out var slot))
+                return slot;
+
+            var go = GetReference(referenceName);
+            if (go == null)
+                throw new KeyNotFoundException(
+                    $"View on '{name}' has no reference '{referenceName}'.");
+            var image = go.GetComponent<Image>();
+            if (image == null)
+                throw new MissingComponentException(
+                    $"View on '{name}' has no Image component on reference '{referenceName}'.");
+
+            slot = new ImageSlot
+            {
+                Image = image,
+                OriginalColor = image.color,
+            };
+
+            var c = image.color;
+            c.a = 0f;
+            image.color = c;
+
+            _imageSlots[referenceName] = slot;
+            return slot;
         }
 
         private async Task LoadAndApplyAsync(ImageSlot slot, string address,
