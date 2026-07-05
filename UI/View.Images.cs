@@ -64,20 +64,12 @@ namespace Heartwood.UI
             return slot.CurrentTask;
         }
 
-        // Awaits every currently-tracked in-flight load on this View. Snapshots the task
-        // list on entry, so loads started after this call don't extend the wait.
-        public Task WhenAllLoadsAsync()
+        // Contributes this View's in-flight image loads to the shared WhenAllLoadsAsync
+        // gather. See WhenAllLoadsAsync in the main partial for the cascade it feeds.
+        private void CollectImageLoads(ref List<Task> tasks)
         {
-            List<Task> tasks = null;
             foreach (var slot in _imageSlots.Values)
-            {
-                if (slot.CurrentTask != null && !slot.CurrentTask.IsCompleted)
-                {
-                    tasks ??= new List<Task>();
-                    tasks.Add(slot.CurrentTask);
-                }
-            }
-            return tasks == null ? Task.CompletedTask : Task.WhenAll(tasks);
+                AddInFlightLoad(ref tasks, slot.CurrentTask);
         }
 
         // Look up or create the slot for `referenceName`. Slot creation captures the

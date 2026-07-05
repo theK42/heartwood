@@ -32,6 +32,14 @@ namespace Heartwood.UI
             }
         }
 
+        // Contributes this View's in-flight table loads to the shared WhenAllLoadsAsync
+        // gather. See WhenAllLoadsAsync in the main partial for the cascade it feeds.
+        private void CollectTableLoads(ref List<Task> tasks)
+        {
+            foreach (var slot in _tableSlots.Values)
+                AddInFlightLoad(ref tasks, slot.CurrentTask);
+        }
+
         // Fire-and-forget entry point. Chains to Core.Instance.Token so a Core-level
         // cancel aborts the load; the returned task is stored on the slot for tracking.
         public void SetTable(string referenceName, string elementAddress, int count, TableAdapter adapter)
