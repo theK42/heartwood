@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace Heartwood
+namespace Heartwood.UI
 {
     public abstract class Screen
     {

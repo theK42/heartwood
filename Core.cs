@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Firebase;
 using Firebase.Crashlytics;
+using Heartwood.UI;
 using UnityEngine;
 
 namespace Heartwood

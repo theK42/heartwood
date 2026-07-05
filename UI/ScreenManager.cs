@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace Heartwood
+namespace Heartwood.UI
 {
     public class ScreenManager
     {

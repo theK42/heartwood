@@ -1,4 +1,4 @@
-namespace Heartwood
+namespace Heartwood.UI
 {
     public abstract class Modal : Screen
     {
