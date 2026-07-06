@@ -20,6 +20,7 @@ namespace Heartwood.UI
         {
             CleanupImages();
             CleanupTables();
+            CleanupModels();
         }
 
         // Awaits every currently-tracked in-flight load on this View, across every kind
@@ -33,6 +34,7 @@ namespace Heartwood.UI
             List<Task> tasks = null;
             CollectImageLoads(ref tasks);
             CollectTableLoads(ref tasks);
+            CollectModelLoads(ref tasks);
             return tasks == null ? Task.CompletedTask : Task.WhenAll(tasks);
         }
 

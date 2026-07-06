@@ -29,6 +29,27 @@ namespace Heartwood.UI
             }
         }
 
+        // Called from SetModelAsync in View.Models.cs when a model takes over a
+        // reference, so an in-flight (or displayed) image never fights the model for the
+        // same target. Cancels the load, releases the sprite handle, and hides the Image;
+        // the slot is kept so its captured original color survives for a later SetImage.
+        private void CancelImageSlot(string referenceName)
+        {
+            if (!_imageSlots.TryGetValue(referenceName, out var slot)) return;
+
+            slot.CancelAndDisposeCts();
+            slot.ReleaseHandle();
+            slot.Address = null;
+            slot.CurrentTask = null;
+            if (slot.Image != null)
+            {
+                slot.Image.sprite = null;
+                var c = slot.Image.color;
+                c.a = 0f;
+                slot.Image.color = c;
+            }
+        }
+
         // Fire-and-forget entry point. Chains to Core.Instance.Token so a Core-level
         // cancel aborts the load; the task is still tracked on the slot for gather.
         public void SetImage(string referenceName, string address)
@@ -43,6 +64,11 @@ namespace Heartwood.UI
                 throw new ArgumentException("Address must be a non-empty string.", nameof(address));
 
             var slot = GetOrCreateImageSlot(referenceName);
+
+            // An image taking over this reference cancels any model rendering on the same
+            // target; SetModelAsync does the mirror via CancelImageSlot. The two systems
+            // never drive one reference at once.
+            CancelModelSlot(referenceName);
 
             // Same-address rebind: warn and return the existing task. Faulted/cancelled
             // prior loads fall through to a fresh (retry) load.
