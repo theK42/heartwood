@@ -32,7 +32,7 @@ namespace Heartwood
         {
             var request = new LoginWithCustomIDRequest
             {
-                CustomId = SystemInfo.deviceUniqueIdentifier,
+                CustomId = CustomId,
                 CreateAccount = true
             };
 
@@ -44,6 +44,28 @@ namespace Heartwood
         }
 
         public void Login() => Core.FireAndForget(LoginAsync(Core.Instance.Token));
+
+#if UNITY_EDITOR
+        // EditorPrefs key holding the dev-selected postfix appended to the device ID.
+        // Shared with DeviceAccountSwitcherWindow so a single editor can masquerade as
+        // multiple PlayFab accounts while building the social features. Editor-only.
+        public const string AccountPostfixKey = "Heartwood.ServerAPI.AccountPostfix";
+#endif
+
+        // The PlayFab CustomId we log in with: the stable per-install device ID, plus an
+        // optional dev-selected postfix in the editor (see DeviceAccountSwitcherWindow).
+        // In player builds this is just SystemInfo.deviceUniqueIdentifier.
+        public static string CustomId
+        {
+            get
+            {
+                var id = SystemInfo.deviceUniqueIdentifier;
+#if UNITY_EDITOR
+                id += UnityEditor.EditorPrefs.GetString(AccountPostfixKey, string.Empty);
+#endif
+                return id;
+            }
+        }
 
         // Wraps PlayFab's success/error callback pair into a Task. RunContinuationsAsynchronously
         // keeps the awaiter off PlayFab's callback thread so we don't re-enter the SDK inline.
