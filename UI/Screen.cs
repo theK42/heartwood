@@ -42,8 +42,14 @@ namespace Heartwood.UI
             
             if (_handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Dispose();
-                throw _handle.OperationException ?? new Exception($"Failed to load {Address}");
+                try
+                {
+                    throw _handle.OperationException ?? new Exception($"Failed to load {Address}");
+                }
+                finally
+                {
+                    Dispose();
+                }
             }
 
             Root = _handle.Result;
@@ -110,7 +116,7 @@ namespace Heartwood.UI
         // (reverting it to a loaded state).
         public virtual void Dispose()
         {
-            DisposeCts(); //ReleaseHandle is
+            DisposeCts();
             ReleaseHandle();
         }
 
@@ -122,12 +128,16 @@ namespace Heartwood.UI
             IsPrepared = false;
         }
 
+        
+        private bool _disposing = false;
         private void DisposeCts()
         {
-            if (_cts == null) return;
+            if (_cts == null || _disposing) return;
+            _disposing = true;
             _cts.Cancel();
             _cts.Dispose();
             _cts = null;
+            _disposing = false;
         }
     }
 }

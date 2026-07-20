@@ -56,6 +56,29 @@ namespace Heartwood.UI
             return go;
         }
 
+        // True when the reference exists and is wired to a live object. Lets callers treat
+        // a reference as optional (e.g. a validation label a prefab may or may not carry)
+        // instead of guarding against the KeyNotFoundException the setters throw.
+        public bool HasReference(string referenceName) =>
+            references.TryGetValue(referenceName, out var go) && go != null;
+
+        // The View on a nested reference — for prefabs that compose sub-Views (e.g. a
+        // relationship slot whose own View owns its Name/EndButton/InviteButton).
+        public View GetView(string referenceName)
+        {
+            var go = GetReference(referenceName);
+            if (go == null)
+            {
+                throw new KeyNotFoundException($"View on '{name}' has no reference '{referenceName}'.");
+            }
+            var view = go.GetComponent<View>();
+            if (view == null)
+            {
+                throw new MissingComponentException($"View on '{name}' has no View component on reference '{referenceName}'.");
+            }
+            return view;
+        }
+
         public void SetText(string referenceName, string text)
         {
             var go = GetReference(referenceName);
@@ -96,6 +119,56 @@ namespace Heartwood.UI
                 throw new MissingComponentException($"View on '{name}' has no button component on reference '{referenceName}'.");
             }
             button.onClick.AddListener(() => action());
+        }
+
+        // Enable or disable any Selectable (Button, TMP_InputField, Toggle, ...). Used to
+        // gate input — e.g. holding a submit button non-interactable until a field validates.
+        public void SetInteractable(string referenceName, bool interactable)
+        {
+            var go = GetReference(referenceName);
+            if (go == null)
+            {
+                throw new KeyNotFoundException($"View on '{name}' has no reference '{referenceName}'.");
+            }
+            var selectable = go.GetComponent<Selectable>();
+            if (selectable == null)
+            {
+                throw new MissingComponentException($"View on '{name}' has no Selectable component on reference '{referenceName}'.");
+            }
+            selectable.interactable = interactable;
+        }
+
+        // Current text of a TMP_InputField reference.
+        public string GetInputText(string referenceName)
+        {
+            var go = GetReference(referenceName);
+            if (go == null)
+            {
+                throw new KeyNotFoundException($"View on '{name}' has no reference '{referenceName}'.");
+            }
+            var input = go.GetComponent<TMP_InputField>();
+            if (input == null)
+            {
+                throw new MissingComponentException($"View on '{name}' has no TMP_InputField component on reference '{referenceName}'.");
+            }
+            return input.text;
+        }
+
+        // Invoke `action` with the field's new text on every edit of a TMP_InputField
+        // reference. Mirrors SetAction's fire-on-event shape.
+        public void SetInputChangedAction(string referenceName, Action<string> action)
+        {
+            var go = GetReference(referenceName);
+            if (go == null)
+            {
+                throw new KeyNotFoundException($"View on '{name}' has no reference '{referenceName}'.");
+            }
+            var input = go.GetComponent<TMP_InputField>();
+            if (input == null)
+            {
+                throw new MissingComponentException($"View on '{name}' has no TMP_InputField component on reference '{referenceName}'.");
+            }
+            input.onValueChanged.AddListener(text => action(text));
         }
     }
 }
