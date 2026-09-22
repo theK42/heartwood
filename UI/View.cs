@@ -16,6 +16,14 @@ namespace Heartwood.UI
     {
         [SerializeField] private SerializedDictionary<string, GameObject> references;
 
+#if UNITY_EDITOR
+        // Escape hatch for ViewEditor's reference-management UI (drag-and-drop add,
+        // category grouping, rename). Not part of the runtime API surface — the
+        // dictionary itself is still the single source of truth; ViewEditor only
+        // groups its entries for display, it doesn't split the storage.
+        public SerializedDictionary<string, GameObject> EditorReferences => references;
+#endif
+
         private void OnDestroy()
         {
             CleanupImages();
