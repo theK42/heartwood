@@ -20,7 +20,7 @@ namespace Heartwood.UI.Editor
     [InitializeOnLoad]
     internal static class ViewReferenceRenameWatcher
     {
-        private static readonly Dictionary<(int viewId, string key), string> _lastKnownName = new();
+        private static readonly Dictionary<(EntityId viewId, string key), string> _lastKnownName = new();
         private static bool _scanQueued;
 
         static ViewReferenceRenameWatcher()
@@ -53,7 +53,7 @@ namespace Heartwood.UI.Editor
                 var references = view.EditorReferences;
                 if (references == null || references.Count == 0) continue;
 
-                var viewId = view.GetInstanceID();
+                var viewId = view.GetEntityId();
                 // Snapshot before iterating — a confirmed rename mutates the dictionary.
                 foreach (var entry in new List<KeyValuePair<string, GameObject>>(references))
                 {
@@ -63,7 +63,7 @@ namespace Heartwood.UI.Editor
         }
 
         private static void CheckEntry(View view, SerializedDictionary<string, GameObject> references,
-            int viewId, string key, GameObject go)
+            EntityId viewId, string key, GameObject go)
         {
             if (go == null) return;
 
@@ -91,7 +91,7 @@ namespace Heartwood.UI.Editor
         }
 
         private static void RenameReference(View view, SerializedDictionary<string, GameObject> references,
-            int viewId, string oldKey, string newKey)
+            EntityId viewId, string oldKey, string newKey)
         {
             if (references.ContainsKey(newKey))
             {
