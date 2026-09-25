@@ -12,6 +12,24 @@ optional modules. Each package lives in its own subfolder of this repo.
 Core has no dependency on PlayFab or Firebase; install only the modules a project uses.
 The modules require the core package.
 
+## Starting a new project
+
+Add just the core package (below), then open **Heartwood → New Project Setup**. The wizard
+lets you opt in to PlayFab and/or Firebase and generates a starter `Game` class. For each
+SDK it detects whether the SDK is in the project and, if not, links to the official download
+and offers an **Import .unitypackage…** button (the PlayFab legacy SDK and the Firebase Unity
+SDK are both `.unitypackage`-only). Once an SDK is present, **Apply**:
+
+- adds the matching Heartwood module to `manifest.json` (its location is derived from your
+  core entry, so it works for both git and `file:` references),
+- writes your PlayFab Title ID into `PlayFabSharedSettings`,
+- writes `Assets/Source/<Name>/<Name>.asmdef` and `Game.cs` (registering the crash reporter
+  and logging in to PlayFab as selected). Existing files are never overwritten.
+
+Firebase's `google-services.json` / `GoogleService-Info.plist` can be copied in from the
+wizard too. The PlayFab SDK to use is the legacy one (`PlayFabClientAPI`), not the newer
+GDK-based `microsoft.playfab.sdk` package.
+
 ## Consuming these packages
 
 Add the packages to the consuming project's `Packages/manifest.json`. Because UPM git
