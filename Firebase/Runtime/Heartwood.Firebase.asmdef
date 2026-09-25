@@ -1,0 +1,19 @@
+{
+    "name": "Heartwood.Firebase",
+    "rootNamespace": "Heartwood",
+    "references": [
+        "Heartwood"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll",
+        "Firebase.Crashlytics.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

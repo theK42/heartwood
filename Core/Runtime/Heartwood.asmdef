@@ -2,7 +2,6 @@
     "name": "Heartwood",
     "rootNamespace": "Heartwood",
     "references": [
-        "PlayFab",
         "Unity.Addressables",
         "Unity.ResourceManager",
         "UnityEngine.UI",
@@ -12,11 +11,8 @@
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "Firebase.App.dll",
-        "Firebase.Crashlytics.dll"
-    ],
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

@@ -1,36 +1,65 @@
 # Heartwood
 
-Shared framework code for Kelson's Unity prototypes: async-first `Core` utilities, a
-PlayFab-backed `ServerAPI`, and a `View`/`Screen`-based UI system.
+Shared framework code for Kelson's Unity prototypes, split into a core package and
+optional modules. Each package lives in its own subfolder of this repo.
 
-## Consuming this package
+| Package | Folder | Contents |
+| --- | --- | --- |
+| `com.thek42.heartwood` | `Core/` | Async-first `Core` utilities, the `View`/`Screen` UI system, the `ICrashReporter` hook. Vendors SerializedDictionary (MIT) under `Core/ThirdParty`. |
+| `com.thek42.heartwood.playfab` | `PlayFab/` | PlayFab-backed `ServerAPI` and the editor account switcher. Needs the PlayFab Unity SDK (asmdef `PlayFab`). |
+| `com.thek42.heartwood.firebase` | `Firebase/` | `FirebaseCrashReporter` (Crashlytics). Needs the Firebase Unity SDK (`Firebase.App.dll`, `Firebase.Crashlytics.dll`). |
 
-This is a Unity package (UPM). In the consuming project's `Packages/manifest.json`, add it
-as a local package pointing at wherever you've cloned this repo, e.g. as a sibling of the
-project folder:
+Core has no dependency on PlayFab or Firebase; install only the modules a project uses.
+The modules require the core package.
+
+## Consuming these packages
+
+Add the packages to the consuming project's `Packages/manifest.json`. Because UPM git
+URLs support subfolders, each package is referenced with `?path=`:
 
 ```json
-"com.thek42.heartwood": "file:../../Heartwood"
+"com.thek42.heartwood": "git@github.com:theK42/heartwood.git?path=/Core#<sha>",
+"com.thek42.heartwood.playfab": "git@github.com:theK42/heartwood.git?path=/PlayFab#<sha>"
 ```
 
-Unity reads the folder live, so edits made here show up immediately in any project
-referencing it via a `file:` path — no publish/update step needed during development.
+For live editing, point them at a sibling checkout of this repo instead (Unity reads the
+folders directly, so edits show up immediately with no publish step):
 
-### Peer dependencies
+```json
+"com.thek42.heartwood": "file:../../Heartwood/Core",
+"com.thek42.heartwood.playfab": "file:../../Heartwood/PlayFab"
+```
 
-These aren't UPM packages in this project's setup, so they aren't declared in
-`package.json`. A consuming project needs its own copy alongside Heartwood:
+Pyramid has an Editor menu (**Heartwood → Package Source**) that toggles between the two
+and a pre-commit hook that stops the `file:` form being committed; see its README.
 
-- **PlayFab C# SDK** — asmdef name `PlayFab` (dropped into `Assets/`, not UPM).
-- **AYellowpaper SerializedCollections** — asmdef name `AYellowpaper.SerializedCollections`
-  (dropped into `Assets/`, not UPM). Available at
-  https://github.com/AYellowpaper/SerializedDictionary if you'd rather install it via UPM
-  git URL in a new project.
-- **Firebase App + Crashlytics** — precompiled `Firebase.App.dll` /
-  `Firebase.Crashlytics.dll`, only if you use the runtime assembly's Firebase-dependent code.
+### Registering optional pieces
 
-## Layout
+Core doesn't know about the modules; the game registers what it uses from a
+`[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]` method:
 
-- `Runtime/` — the `Heartwood` assembly (game code, all platforms).
-- `Editor/` — the `Heartwood.Editor` assembly (editor-only tooling: the `View` inspector,
-  the device account switcher).
+```csharp
+Core.RegisterGame(() => new Game());
+Core.RegisterCrashReporter(() => new FirebaseCrashReporter()); // optional
+```
+
+The game's own asmdef references `Heartwood`, plus `Heartwood.PlayFab` / `Heartwood.Firebase`
+for the modules it installs.
+
+## Third-party notes
+
+- SerializedDictionary (`Core/ThirdParty/SerializedDictionary`) is MIT-licensed; its
+  `LICENSE.md` travels with it. It's expected to go away once Unity's built-in dictionary
+  serialization (6.6+) replaces it.
+- The vendored copy is patched in three places (one `.uxml`, two editor scripts) to load its
+  editor assets from `Packages/com.thek42.heartwood/ThirdParty/...` instead of the upstream's
+  hardcoded `Assets/Plugins/SerializedCollections/...`. Reapply that if re-vendoring.
+- A project must not also contain its own copy of SerializedDictionary (duplicate
+  `AYellowpaper.SerializedCollections` assemblies).
+- PlayFab and Firebase SDKs are not installed by these packages. Each module's asmdef
+  references them by assembly name, so the project just needs them present.
+
+## Layout of each package
+
+- `Runtime/` — the runtime assembly (`Heartwood`, `Heartwood.PlayFab`, `Heartwood.Firebase`).
+- `Editor/` — editor-only assemblies (`Heartwood.Editor`, `Heartwood.PlayFab.Editor`).

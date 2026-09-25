@@ -1,0 +1,10 @@
+{
+  "name": "com.thek42.heartwood.playfab",
+  "version": "0.2.0",
+  "displayName": "Heartwood PlayFab",
+  "description": "PlayFab-backed ServerAPI for Heartwood, plus an editor account switcher. Requires the PlayFab Unity SDK (asmdef 'PlayFab') in the project.",
+  "unity": "6000.4",
+  "dependencies": {
+    "com.thek42.heartwood": "0.2.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+    "name": "Heartwood.PlayFab",
+    "rootNamespace": "Heartwood",
+    "references": [
+        "Heartwood",
+        "PlayFab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

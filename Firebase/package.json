@@ -1,0 +1,10 @@
+{
+  "name": "com.thek42.heartwood.firebase",
+  "version": "0.2.0",
+  "displayName": "Heartwood Firebase",
+  "description": "Firebase Crashlytics crash reporter for Heartwood. Requires the Firebase Unity SDK (App and Crashlytics) in the project.",
+  "unity": "6000.4",
+  "dependencies": {
+    "com.thek42.heartwood": "0.2.0"
+  }
+}

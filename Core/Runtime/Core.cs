@@ -1,8 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase;
-using Firebase.Crashlytics;
 using Heartwood.UI;
 using UnityEngine;
 
@@ -19,6 +17,13 @@ namespace Heartwood
         // project, which runs before Core's BeforeSceneLoad bootstrap.
         private static Func<Game> _gameFactory;
         public static void RegisterGame(Func<Game> factory) => _gameFactory = factory;
+
+        // Optional; registered from the same place as RegisterGame. With none registered,
+        // exceptions are still logged and surfaced, just not reported anywhere.
+        private static Func<ICrashReporter> _crashReporterFactory;
+        public static void RegisterCrashReporter(Func<ICrashReporter> factory) => _crashReporterFactory = factory;
+
+        private static ICrashReporter _crashReporter;
 
         private CancellationTokenSource _rootCts;
         public CancellationToken Token => _rootCts.Token;
@@ -37,27 +42,15 @@ namespace Heartwood
         {
             _rootCts = new CancellationTokenSource();
 
-            // Subscribe before Firebase init so early-startup exceptions are still caught.
-            // Crashlytics' auto-handler is hooked on logMessageReceivedThreaded too; with
-            // ReportUncaughtExceptionsAsFatal=true (set in the continuation below) it will
-            // report exceptions that flow through here as fatal.
+            // Subscribe before the crash reporter initializes so early-startup exceptions are
+            // still caught. Reporters typically hook logMessageReceivedThreaded themselves
+            // too, so exceptions that flow through here get reported by them as well.
             Application.logMessageReceivedThreaded += OnLogMessage;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
-            // Continuation runs on a threadpool thread — don't touch Unity APIs from it without dispatching.
-            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
-            {
-                if (task.Result == DependencyStatus.Available)
-                {
-                    Crashlytics.ReportUncaughtExceptionsAsFatal = true;
-                    Debug.Log("Firebase ready; Crashlytics active.");
-                }
-                else
-                {
-                    Debug.LogError($"Firebase dependency check failed: {task.Result}");
-                }
-            });
+            _crashReporter = _crashReporterFactory?.Invoke();
+            _crashReporter?.Initialize();
         }
 
         private void OnDestroy()
@@ -82,7 +75,7 @@ namespace Heartwood
             {
                 // TODO: kick off the error-handler flow — halt as much running behavior
                 // as possible, show a popup, on OK tear down and restart from Bootstrap.
-                // Crashlytics' auto-handler is already reporting these as fatal.
+                // A registered crash reporter is expected to be capturing these itself.
 
                 ScreenManager.Instance.PushModal(new GenericModal("Error", "An unhandled exception occurred."));
             }
@@ -97,7 +90,7 @@ namespace Heartwood
             try
             {
                 args.SetObserved();
-                // Re-log so it flows through Crashlytics' auto-handler (fatal) and OnLogMessage.
+                // Re-log so it flows through the crash reporter's log hook and OnLogMessage.
                 Debug.LogException(args.Exception);
             }
             catch (Exception e)
@@ -127,8 +120,7 @@ namespace Heartwood
             // we can't trust that anything else is still working.
             try
             {
-                Crashlytics.SetCustomKey("error_handler_failure", "true");
-                Crashlytics.LogException(new Exception("ERROR HANDLER EXCEPTION", e));
+                _crashReporter?.RecordHandlerFailure(e);
             }
             catch
             {
@@ -153,7 +145,7 @@ namespace Heartwood
 
         // The only sanctioned async void in the project: bridges void callers into the
         // async/await world, swallows OperationCanceledException, routes everything else
-        // through Debug.LogException (Crashlytics-fatal + the OnLogMessage flow).
+        // through Debug.LogException (crash reporter + the OnLogMessage flow).
         public static async void FireAndForget(Task task)
         {
             try

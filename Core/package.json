@@ -1,0 +1,11 @@
+{
+  "name": "com.thek42.heartwood",
+  "version": "0.2.0",
+  "displayName": "Heartwood",
+  "description": "Shared game framework: async-first Core utilities and a View/Screen-based UI system. Optional modules add a PlayFab-backed ServerAPI (com.thek42.heartwood.playfab) and Firebase crash reporting (com.thek42.heartwood.firebase).",
+  "unity": "6000.4",
+  "dependencies": {
+    "com.unity.addressables": "2.9.1",
+    "com.unity.ugui": "2.0.0"
+  }
+}
