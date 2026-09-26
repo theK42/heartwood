@@ -48,8 +48,12 @@ folders directly, so edits show up immediately with no publish step):
 "com.thek42.heartwood.playfab": "file:../../Heartwood/PlayFab"
 ```
 
-Pyramid has an Editor menu (**Heartwood → Package Source**) that toggles between the two
-and a pre-commit hook that stops the `file:` form being committed; see its README.
+The core package adds an Editor menu, **Heartwood → Package Source**, that toggles every
+installed Heartwood package between the two: **Use Local Copy** expects the checkout at
+`../Heartwood` next to the project, and **Use Git Package (pin current commit)** pins to that
+checkout's `HEAD` after checking it's clean and pushed. **Install Git Hooks** writes
+`.githooks/pre-commit` into the project (if it isn't already there) and sets
+`core.hooksPath`, so the `file:` form can't be committed by accident.
 
 ### Registering optional pieces
 
