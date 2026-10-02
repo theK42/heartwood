@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using AYellowpaper.SerializedCollections;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -8,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Heartwood.UI.Editor
 {
-    // Replaces the default SerializedDictionary inspector for View.references with a
+    // Replaces the default dictionary inspector for View.references with a
     // categorized, drag-and-drop-friendly editor. The dictionary stays the single
     // source of truth (still keyed by name, still the "just give me the GameObject"
     // escape hatch) — this editor only groups its entries for display, based on
@@ -144,7 +143,7 @@ namespace Heartwood.UI.Editor
         // Each is keyed by its own name; collisions are logged and skipped rather than
         // silently overwriting an existing entry (the dictionary's whole job is to
         // catch exactly that ambiguity).
-        private void DrawDropZone(View view, SerializedDictionary<string, GameObject> references)
+        private void DrawDropZone(View view, Dictionary<string, GameObject> references)
         {
             var rect = GUILayoutUtility.GetRect(0, 40, GUILayout.ExpandWidth(true));
             GUI.Box(rect, "Drag GameObjects here to add as references", EditorStyles.helpBox);
@@ -174,7 +173,7 @@ namespace Heartwood.UI.Editor
             }
         }
 
-        private void DrawManualAdd(View view, SerializedDictionary<string, GameObject> references)
+        private void DrawManualAdd(View view, Dictionary<string, GameObject> references)
         {
             EditorGUILayout.BeginHorizontal();
             _pendingAddObject = (GameObject)EditorGUILayout.ObjectField(
@@ -193,7 +192,7 @@ namespace Heartwood.UI.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static bool AddReference(SerializedDictionary<string, GameObject> references, GameObject go)
+        private static bool AddReference(Dictionary<string, GameObject> references, GameObject go)
         {
             var key = go.name;
             if (references.TryGetValue(key, out var existing))
@@ -209,7 +208,7 @@ namespace Heartwood.UI.Editor
             return true;
         }
 
-        private static void TryRename(View view, SerializedDictionary<string, GameObject> references,
+        private static void TryRename(View view, Dictionary<string, GameObject> references,
             string oldKey, string newKey, GameObject go)
         {
             newKey = newKey?.Trim();

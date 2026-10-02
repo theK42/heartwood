@@ -5,7 +5,7 @@ optional modules. Each package lives in its own subfolder of this repo.
 
 | Package | Folder | Contents |
 | --- | --- | --- |
-| `com.thek42.heartwood` | `Core/` | Async-first `Core` utilities, the `View`/`Screen` UI system, the `ICrashReporter` hook. Vendors SerializedDictionary (MIT) under `Core/ThirdParty`. |
+| `com.thek42.heartwood` | `Core/` | Async-first `Core` utilities, the `View`/`Screen` UI system, the `ICrashReporter` hook. |
 | `com.thek42.heartwood.playfab` | `PlayFab/` | PlayFab-backed `ServerAPI` and the editor account switcher. Needs the PlayFab Unity SDK (asmdef `PlayFab`). |
 | `com.thek42.heartwood.firebase` | `Firebase/` | `FirebaseCrashReporter` (Crashlytics). Needs the Firebase Unity SDK (`Firebase.App.dll`, `Firebase.Crashlytics.dll`). |
 
@@ -70,14 +70,6 @@ for the modules it installs.
 
 ## Third-party notes
 
-- SerializedDictionary (`Core/ThirdParty/SerializedDictionary`) is MIT-licensed; its
-  `LICENSE.md` travels with it. It's expected to go away once Unity's built-in dictionary
-  serialization (6.6+) replaces it.
-- The vendored copy is patched in three places (one `.uxml`, two editor scripts) to load its
-  editor assets from `Packages/com.thek42.heartwood/ThirdParty/...` instead of the upstream's
-  hardcoded `Assets/Plugins/SerializedCollections/...`. Reapply that if re-vendoring.
-- A project must not also contain its own copy of SerializedDictionary (duplicate
-  `AYellowpaper.SerializedCollections` assemblies).
 - PlayFab and Firebase SDKs are not installed by these packages. Each module's asmdef
   references them by assembly name, so the project just needs them present.
 

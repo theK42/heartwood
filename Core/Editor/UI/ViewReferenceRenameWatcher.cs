@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using AYellowpaper.SerializedCollections;
 using UnityEditor;
 using UnityEngine;
 
@@ -62,7 +61,7 @@ namespace Heartwood.UI.Editor
             }
         }
 
-        private static void CheckEntry(View view, SerializedDictionary<string, GameObject> references,
+        private static void CheckEntry(View view, Dictionary<string, GameObject> references,
             EntityId viewId, string key, GameObject go)
         {
             if (go == null) return;
@@ -90,7 +89,7 @@ namespace Heartwood.UI.Editor
             }
         }
 
-        private static void RenameReference(View view, SerializedDictionary<string, GameObject> references,
+        private static void RenameReference(View view, Dictionary<string, GameObject> references,
             EntityId viewId, string oldKey, string newKey)
         {
             if (references.ContainsKey(newKey))

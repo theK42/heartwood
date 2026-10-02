@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AYellowpaper.SerializedCollections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,14 +13,14 @@ namespace Heartwood.UI
     // hands off to each partial's Cleanup* method.
     public partial class View : MonoBehaviour
     {
-        [SerializeField] private SerializedDictionary<string, GameObject> references;
+        [SerializeField] private Dictionary<string, GameObject> _references = new();
 
 #if UNITY_EDITOR
         // Escape hatch for ViewEditor's reference-management UI (drag-and-drop add,
         // category grouping, rename). Not part of the runtime API surface — the
         // dictionary itself is still the single source of truth; ViewEditor only
         // groups its entries for display, it doesn't split the storage.
-        public SerializedDictionary<string, GameObject> EditorReferences => references;
+        public Dictionary<string, GameObject> EditorReferences => _references;
 #endif
 
         private void OnDestroy()
@@ -58,7 +57,7 @@ namespace Heartwood.UI
 
         public GameObject GetReference(string referenceName)
         {
-            if (!references.TryGetValue(referenceName, out var go))
+            if (!_references.TryGetValue(referenceName, out var go))
                 throw new KeyNotFoundException(
                     $"View on '{name}' has no reference named '{referenceName}'.");
             return go;
@@ -68,7 +67,7 @@ namespace Heartwood.UI
         // a reference as optional (e.g. a validation label a prefab may or may not carry)
         // instead of guarding against the KeyNotFoundException the setters throw.
         public bool HasReference(string referenceName) =>
-            references.TryGetValue(referenceName, out var go) && go != null;
+            _references.TryGetValue(referenceName, out var go) && go != null;
 
         // The View on a nested reference — for prefabs that compose sub-Views (e.g. a
         // relationship slot whose own View owns its Name/EndButton/InviteButton).

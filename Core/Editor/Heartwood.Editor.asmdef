@@ -3,7 +3,6 @@
     "rootNamespace": "Heartwood",
     "references": [
         "Heartwood",
-        "AYellowpaper.SerializedCollections",
         "Unity.TextMeshPro",
         "UnityEngine.UI"
     ],
