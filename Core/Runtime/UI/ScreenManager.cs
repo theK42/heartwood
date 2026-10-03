@@ -26,7 +26,13 @@ namespace Heartwood.UI
             RootCanvas = canvasGo.AddComponent<Canvas>();
             RootCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            canvasGo.AddComponent<CanvasScaler>();
+            // The game decides how UI scales across screen sizes. The error path can create
+            // the manager before a Game exists, hence the static default.
+            var scaler = canvasGo.AddComponent<CanvasScaler>();
+            if (Core.Instance != null && Core.Instance.Game != null)
+                Core.Instance.Game.ConfigureCanvasScaler(scaler);
+            else
+                Game.ConfigureDefaultCanvasScaler(scaler);
             canvasGo.AddComponent<GraphicRaycaster>();
 
             Object.DontDestroyOnLoad(canvasGo);

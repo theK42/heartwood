@@ -113,6 +113,9 @@ namespace Heartwood.UI
             }
         }
 
+        // Make `action` the button's click handler, replacing any action set before, so
+        // re-binding a reused element (a pooled table row) doesn't stack handlers. Listeners
+        // wired up in the inspector are persistent and unaffected.
         public void SetAction(string referenceName, Action action)
         {
             var go = GetReference(referenceName);
@@ -125,6 +128,7 @@ namespace Heartwood.UI
             {
                 throw new MissingComponentException($"View on '{name}' has no button component on reference '{referenceName}'.");
             }
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => action());
         }
 
@@ -162,7 +166,7 @@ namespace Heartwood.UI
         }
 
         // Invoke `action` with the field's new text on every edit of a TMP_InputField
-        // reference. Mirrors SetAction's fire-on-event shape.
+        // reference. Like SetAction, replaces any action set before.
         public void SetInputChangedAction(string referenceName, Action<string> action)
         {
             var go = GetReference(referenceName);
@@ -175,6 +179,7 @@ namespace Heartwood.UI
             {
                 throw new MissingComponentException($"View on '{name}' has no TMP_InputField component on reference '{referenceName}'.");
             }
+            input.onValueChanged.RemoveAllListeners();
             input.onValueChanged.AddListener(text => action(text));
         }
     }

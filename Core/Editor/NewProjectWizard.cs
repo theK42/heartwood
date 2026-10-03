@@ -404,7 +404,7 @@ namespace Heartwood
         {
             var path = EditorUtility.OpenFilePanel("Select a .unitypackage", "", "unitypackage");
             if (!string.IsNullOrEmpty(path))
-                AssetDatabase.ImportPackage(path, true);
+                UnityEditor.AssetPackage.Package.Import(path, true);
         }
 
         private void CopyFirebaseConfigFile(string fileName, string extension)
