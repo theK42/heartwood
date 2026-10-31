@@ -1,0 +1,27 @@
+{
+    "name": "Heartwood.Editor.Pipeline",
+    "rootNamespace": "Heartwood",
+    "references": [
+        "Heartwood.Editor",
+        "Unity.Pipeline.Attributes"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "HEARTWOOD_PIPELINE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.pipeline",
+            "expression": "",
+            "define": "HEARTWOOD_PIPELINE"
+        }
+    ],
+    "noEngineReferences": false
+}

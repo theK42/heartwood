@@ -138,12 +138,32 @@ exit 0
         [MenuItem("Heartwood/Package Source/Install Git Hooks")]
         private static void InstallGitHooks()
         {
-            var (repoCode, _, _) = RunGit(ProjectRoot, "rev-parse --git-dir");
-            if (repoCode != 0)
+            if (!IsGitRepo())
             {
                 EditorUtility.DisplayDialog("Not a git repository",
                     $"{ProjectRoot} isn't a git repository yet. Run `git init` there first.", "OK");
                 return;
+            }
+
+            if (TryInstallGitHooks(out var message))
+                Debug.Log(message);
+            else
+                Debug.LogError(message);
+        }
+
+        internal static bool IsGitRepo() => RunGit(ProjectRoot, "rev-parse --git-dir").code == 0;
+
+        internal static bool GitHooksInstalled() =>
+            File.Exists(Path.Combine(ProjectRoot, HooksFolderName, "pre-commit")) &&
+            RunGit(ProjectRoot, "config core.hooksPath").stdout.Trim() == HooksFolderName;
+
+        // Shared with ProjectSetup. The message says what happened, or why it failed.
+        internal static bool TryInstallGitHooks(out string message)
+        {
+            if (!IsGitRepo())
+            {
+                message = $"{ProjectRoot} isn't a git repository.";
+                return false;
             }
 
             // Written if missing, never overwritten, so a project can customize its hook.
@@ -156,10 +176,10 @@ exit 0
             }
 
             var (code, _, error) = RunGit(ProjectRoot, $"config core.hooksPath {HooksFolderName}");
-            if (code == 0)
-                Debug.Log($"core.hooksPath set to {HooksFolderName} — the pre-commit safety check is now active.");
-            else
-                Debug.LogError($"Failed to set core.hooksPath: {error}");
+            message = code == 0
+                ? $"core.hooksPath set to {HooksFolderName} — the pre-commit safety check is now active."
+                : $"Failed to set core.hooksPath: {error}";
+            return code == 0;
         }
 
         private static IEnumerable<(string Key, string Folder)> InstalledPackages()

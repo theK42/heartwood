@@ -26,9 +26,33 @@ SDK are both `.unitypackage`-only). Once an SDK is present, **Apply**:
 - writes `Assets/Source/<Name>/<Name>.asmdef` and `Game.cs` (registering the crash reporter
   and logging in to PlayFab as selected). Existing files are never overwritten.
 
+- installs the git pre-commit hook (see **Install Git Hooks** below), if the project is a
+  git repository.
+
 Firebase's `google-services.json` / `GoogleService-Info.plist` can be copied in from the
 wizard too. The PlayFab SDK to use is the legacy one (`PlayFabClientAPI`), not the newer
 GDK-based `microsoft.playfab.sdk` package.
+
+### Headless setup
+
+The same setup (`ProjectSetup` in `Core/Editor`) runs without the window. With the Unity CLI,
+in a project that has `com.unity.pipeline` (which `unity projects create` adds):
+
+```
+unity run <project> --command heartwood.setup -- --game <Name> --git_hooks
+unity command heartwood setup --game <Name> --git_hooks     # against an open Editor
+```
+
+Other flags: `--no_game`, `--playfab_title_id <id>`, `--firebase`. `--game` defaults to the
+Product Name. Without the pipeline package, use `-executeMethod` instead:
+
+```
+Unity -batchmode -quit -projectPath <project> -executeMethod Heartwood.ProjectSetup.RunFromCommandLine -heartwoodGame <Name> -heartwoodGitHooks
+```
+
+(`-heartwoodNoGame`, `-heartwoodPlayFab <TitleId>`, `-heartwoodFirebase`.) Both refuse to run,
+with an error and nothing changed, if a selected step is blocked (SDK missing, not a git
+repo, bad name). The SDK imports themselves still need the wizard or a manual import.
 
 ## Consuming these packages
 
