@@ -1,0 +1,22 @@
+# Unity writes LF everywhere (scenes, prefabs, assets, .meta), so keep LF in the working
+# tree on every platform instead of letting Windows checkouts rewrite them to CRLF.
+* text=auto eol=lf
+
+# Never normalize binary assets.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tga binary
+*.psd binary
+*.exr binary
+*.hdr binary
+*.fbx binary
+*.obj binary
+*.blend binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary
+*.dll binary
+*.unitypackage binary

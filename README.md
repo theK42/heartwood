@@ -54,6 +54,35 @@ Unity -batchmode -quit -projectPath <project> -executeMethod Heartwood.ProjectSe
 with an error and nothing changed, if a selected step is blocked (SDK missing, not a git
 repo, bad name). The SDK imports themselves still need the wizard or a manual import.
 
+### Claude Code skill
+
+`Skills/new-unity-project/` is a [Claude Code](https://claude.com/claude-code) skill that does
+the whole new-project routine: creates the project with the Unity CLI, adds Heartwood pinned
+to the latest pushed commit, runs the headless setup above, checks it compiles, and makes the
+initial git commit. It isn't a Unity package; it just lives here so it stays in step with
+`ProjectSetup`.
+
+To install it as a user-level skill (available in every Claude Code session, desktop app or
+CLI), link it into `~/.claude/skills` so pulling this repo keeps it current. On Windows, from
+a Command Prompt (a directory junction needs no admin rights):
+
+```
+mkdir %USERPROFILE%\.claude\skills
+mklink /J %USERPROFILE%\.claude\skills\new-unity-project %USERPROFILE%\Documents\Heartwood\Skills\new-unity-project
+```
+
+On macOS/Linux:
+
+```
+mkdir -p ~/.claude/skills
+ln -s ~/Documents/Heartwood/Skills/new-unity-project ~/.claude/skills/new-unity-project
+```
+
+(Or copy the folder there instead, and re-copy after updates.) New sessions pick it up; ask
+for a new Unity project or run `/new-unity-project <Name>`. It needs the Unity
+CLI (`unity`; on Windows, `$env:UNITY_CLI_CHANNEL='beta'; irm https://public-cdn.cloud.unity3d.com/hub/prod/cli/install.ps1 | iex`
+in PowerShell) and git with SSH access to this repo.
+
 ## Consuming these packages
 
 Add the packages to the consuming project's `Packages/manifest.json`. Because UPM git
